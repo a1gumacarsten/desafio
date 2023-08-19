@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+	<title>Fornecedores</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+		}
+
+		h1 {
+			text-align: center;
+			margin-bottom: 20px;
+		}
+
+		#fornecedoresTable {
+			border-collapse: collapse;
+			width: 100%;
+		}
+
+		#fornecedoresTable th,
+		#fornecedoresTable td {
+			border: 1px solid #ddd;
+			padding: 8px;
+			text-align: left;
+		}
+
+		#fornecedoresTable th {
+			background-color: #f2f2f2;
+		}
+
+		#fornecedoresTable tr:nth-child(even) {
+			background-color: #f2f2f2;
+		}
+
+		#fornecedoresTable tr:hover {
+			background-color: #ddd;
+		}
+
+		.estrela {
+			cursor: pointer;
+		}
+
+		/* Estilo da modal */
+		.modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.7);
+		}
+
+		.modal-content {
+			background-color: white;
+			width: 50%;
+			padding: 20px;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			border-radius: 5px;
+		}
+
+		label {
+			display: block;
+			margin-bottom: 5px;
+		}
+
+		input[type="text"],
+		input[type="email"],
+		textarea {
+			width: 100%;
+			padding: 8px;
+			border: 1px solid #ccc;
+			border-radius: 3px;
+			margin-bottom: 10px;
+		}
+
+		button {
+			background-color: #4CAF50;
+			color: white;
+			border: none;
+			padding: 10px 20px;
+			border-radius: 3px;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background-color: #45a049;
+		}
+
+		#fecharModalBtn {
+			background-color: #f44336;
+		}
+
+		#fecharModalBtn:hover {
+			background-color: #d32f2f;
+		}
+		
+		#telefonesContainer,
+		#telefonesContainerEdit {
+    		max-height: 150px;
+    		overflow-y: auto;
+    		border: 1px solid #ccc;
+    		padding: 5px;
+		}
+
+		@media screen and (max-width: 600px) {
+			#fornecedoresTable {
+				font-size: 12px;
+			}
+
+			#fornecedoresTable th,
+			#fornecedoresTable td {
+				padding: 5px;
+			}
+
+			#fornecedoresTable th:first-child,
+			#fornecedoresTable td:first-child {
+				display: none;
+			}
+
+			#fornecedoresTable tr {
+				border-bottom: 1px solid #ddd;
+				display: block;
+				margin-bottom: 10px;
+			}
+
+			#fornecedoresTable tbody {
+				display: flex;
+				flex-wrap: wrap;
+			}
+
+			#fornecedoresTable td {
+				display: block;
+				text-align: right;
+				position: relative;
+				padding-left: 50%;
+			}
+
+			#fornecedoresTable td::before {
+				content: attr(data-label);
+				position: absolute;
+				left: 0;
+				width: 50%;
+				padding-left: 5px;
+				font-weight: bold;
+				text-align: left;
+			}
+
+			#fornecedoresTable th::before {
+				content: none;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Fornecedores</h1>
+	<div>
+		<button id="novoBtn">Novo</button>
+		<button id="editBtn"><i class="fas fa-edit"></i></button>
+		<button id="excluirBtn"><i class="fas fa-trash"></i></button>
+	</div>
+	<table id="fornecedoresTable">
+		<thead>
+			<tr>
+				<th></th>
+				<th>ID</th>
+				<th>Nome</th>
+				<th>Email</th>
+				<th>Telefone</th>
+				<th>Tipo</th>
+				<th>Observação</th>
+				<th>Favorito</th>
+			</tr>
+		</thead>
+		<tbody></tbody>
+	</table>
+
+	<div id="modalNewSupplier" class="modal">
+		<div class="modal-content">
+			<h2>Cadastrar Novo Fornecedor</h2>
+			<form id="cadastroForm">
+				<label for="name">Nome:</label>
+				<input type="text" id="name" name="name" required><br>
+
+				<label for="email">Email:</label>
+				<input type="email" id="email" name="email" required><br>
+
+				<label for="type">Tipo do Fornecedor:</label>
+				<select id="type" name="type">
+    				<option value="ATACADISTA">ATACADISTA</option>
+    				<option value="DISTRIBUIDOR">DISTRIBUIDOR</option>
+    				<option value="FABRICANTE">FABRICANTE</option>
+    				<option value="VAREJISTA">VAREJISTA</option>
+				</select><br>
+
+				<label for="observation">Observação:</label>
+				<textarea id="observation" name="observation"></textarea><br>
+
+				<h3>Telefones:</h3>
+				<button type="button" id="addTelephoneBtn">Adicionar Telefone</button>
+				<div id="telefonesContainer">
+				</div>
+
+				<button type="submit" id="newSupplierBtn">Salvar</button>
+				<button type="button" id="fecharModalBtn">Fechar</button>
+			</form>
+		</div>
+	</div>
+
+	<div id="modalEditSupplier" class="modal">
+		<div class="modal-content">
+			<h2>Editar Fornecedor</h2>
+			<form id="editFormModal">
+				<input type="hidden" id="editId" name="id">
+				<label for="editNome">Nome:</label>
+				<input type="text" id="editNome" name="name" required><br>
+
+				<label for="editEmail">Email:</label>
+				<input type="email" id="editEmail" name="email" required><br>
+
+				<label for="editTipo">Tipo do Fornecedor: </label>
+				<select id="editTipo" name="type">
+    				<option value="ATACADISTA">ATACADISTA</option>
+    				<option value="DISTRIBUIDOR">DISTRIBUIDOR</option>
+    				<option value="FABRICANTE">FABRICANTE</option>
+    				<option value="VAREJISTA">VAREJISTA</option>
+				</select><br>
+
+				<label for="editObservacao">Observação:</label>
+				<textarea id="editObservacao" name="observation"></textarea><br>
+				
+				<label for="telefones">Telefones:</label>
+				<button type="button" class="addTelephoneBtnEdit">Adicionar Telefone</button>
+        		<div id="telefonesContainerEdit">
+				</div>
+
+				<button type="submit" id="editarFornecedorBtn">Salvar</button>
+				<button type="button" id="closeEditModalBtn">Fechar</button>
+			</form>
+		</div>
+	</div>
+
+	<script>
+		function populateTable(fornecedores) {
+			const tableBody = document.querySelector("#fornecedoresTable tbody");
+			
+			tableBody.innerHTML = '';
+
+			fornecedores.forEach(fornecedor => {
+				const row = tableBody.insertRow();
+				row.insertCell().innerHTML = ` <td><input type="checkbox" class="checkbox-selecionar" data-id="${fornecedor.id}"></td>`;
+				row.insertCell().textContent = fornecedor.id;
+				row.insertCell().textContent = fornecedor.name;
+				row.insertCell().textContent = fornecedor.email;
+				row.insertCell().textContent = fornecedor.telephones[0].number;
+				row.insertCell().textContent = fornecedor.type;
+				row.insertCell().textContent = fornecedor.observation;
+
+				const favoritoCell = row.insertCell();
+				const estrela = document.createElement("span");
+				estrela.textContent = fornecedor.favorite ? "★" : "☆";
+				estrela.style.cursor = "pointer";
+				estrela.addEventListener("click", () => toggleFavorite(fornecedor.id));
+				favoritoCell.appendChild(estrela);
+			});
+		}
+
+		async function fetchSupplier() {
+			try {
+				const response = await fetch("http://localhost:8080/supplier");
+				const fornecedores = await response.json();
+				populateTable(fornecedores);
+			} catch (error) {
+				console.error("Erro ao buscar fornecedores:", error);
+			}
+		}
+
+		async function toggleFavorite(id) {
+			try {
+				const response = await fetch(`http://localhost:8080/supplier/favorite/${id}`, {
+					method: "POST"
+				});
+
+				fetchSupplier();
+			} catch (error) {
+				console.error("Erro ao favoritar fornecedor:", error);
+			}
+		}
+
+		fetchSupplier();
+
+		document.addEventListener("DOMContentLoaded", function () {
+			const newSupplierBtn = document.getElementById("novoBtn");
+			const modalNewSupplier = document.getElementById("modalNewSupplier");
+			const fecharModalBtn = document.getElementById("fecharModalBtn");
+			const cadastroForm = document.getElementById("cadastroForm");
+
+			newSupplierBtn.addEventListener("click", () => {
+				modalNewSupplier.style.display = "block";
+			});
+
+			fecharModalBtn.addEventListener("click", () => {
+				modalNewSupplier.style.display = "none";
+			});
+
+			cadastroForm.addEventListener("submit", (event) => {
+				event.preventDefault();
+				modalNewSupplier.style.display = "none";
+			});
+
+			const fornecedoresSelecionados = [];
+
+			function updateSelectedFornecedores(id, checked) {
+				if (checked) {
+					fornecedoresSelecionados.push(id);
+				} else {
+					const index = fornecedoresSelecionados.indexOf(id);
+					if (index !== -1) {
+						fornecedoresSelecionados.splice(index, 1);
+					}
+				}
+			}
+
+			function handleCheckboxClick(event) {
+				const checkbox = event.target;
+				const row = checkbox.parentNode.parentNode;
+				const id = row.cells[1].textContent;
+
+				updateSelectedFornecedores(id, checkbox.checked);
+			}
+
+			const checkboxes = document.querySelectorAll("#fornecedoresTable tbody input[type='checkbox']");
+			checkboxes.forEach(checkbox => {
+				checkbox.addEventListener("click", handleCheckboxClick);
+			});
+
+			const excluirBtn = document.getElementById("excluirBtn");
+			excluirBtn.addEventListener("click", deletarFornecedoresSelecionados);
+
+			function deletarFornecedoresSelecionados() {
+				const idsSelecionados = [];
+				const checkboxes = document.querySelectorAll(".checkbox-selecionar");
+
+				checkboxes.forEach(checkbox => {
+					if (checkbox.checked) {
+						idsSelecionados.push(parseInt(checkbox.dataset.id));
+					}
+				});
+
+				deletarFornecedores(idsSelecionados);
+			}
+			
+			async function deletarFornecedores(ids) {
+				try {
+					const response = await fetch(`http://localhost:8080/supplier/delete?ids=${ids}`, {
+						method: "DELETE",
+						headers: {
+							"Content-Type": "application/json"
+						}
+					});
+
+					if (response.ok) {
+						fetchSupplier();
+						modalNewSupplier.style.display = "none";
+					} else {
+						console.error("Erro ao criar fornecedor:", response.statusText);
+					}
+				} catch (error) {
+					console.error("Erro ao criar fornecedor:", error);
+				}
+			}
+
+			cadastroForm.addEventListener("submit", (event) => {
+				event.preventDefault();
+
+				const novoFornecedor = {
+					name: document.getElementById("name").value,
+					email: document.getElementById("email").value,
+					type: document.getElementById("type").value,
+					observation: document.getElementById("observation").value,
+					telephones: getTelefones(),
+					favorite: false
+				};
+
+				criarFornecedor(novoFornecedor);
+			});
+
+			async function criarFornecedor(novoFornecedor) {
+				try {
+					const response = await fetch("http://localhost:8080/supplier/create", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json"
+						},
+						body: JSON.stringify(novoFornecedor)
+					});
+
+					if (response.ok) {
+						fetchSupplier();
+    					modalNewSupplier.style.display = "none";
+
+    					document.getElementById("name").value = "";
+    					document.getElementById("email").value = "";
+						document.getElementById("type").value = "";
+						document.getElementById("observation").value = "";
+						document.querySelectorAll("#telefonesContainer input[type='text']").forEach(input => {
+							input.value = "";
+						});
+					} else {
+						console.error("Erro ao criar fornecedor:", response.statusText);
+					}
+				} catch (error) {
+					console.error("Erro ao criar fornecedor:", error);
+				}
+			}
+
+			async function editarFornecedor(id, editSupplier) {
+				try {
+					const response = await fetch(`http://localhost:8080/supplier/update/${id}`, {
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json"
+						},
+						body: JSON.stringify(editSupplier)
+					});
+
+					if (response.ok) {
+						fetchSupplier();
+					    document.getElementById("editNome").value = "";
+					    document.getElementById("editEmail").value = "";
+					    document.getElementById("editTipo").value = "";
+					    document.getElementById("editObservacao").value = "";
+					    document.querySelectorAll("#telefonesContainerEdit input[type='text']").forEach(input => {
+					        input.value = "";
+					    });
+						modalEditSupplier.style.display = "none";
+					} else {
+						console.error("Erro ao criar fornecedor:", response.statusText);
+					}
+				} catch (error) {
+					console.error("Erro ao criar fornecedor:", error);
+				}
+			}
+
+			const telefonesContainer = document.getElementById("telefonesContainer");
+			const addTelephoneBtn = document.getElementById("addTelephoneBtn");
+
+			let telefoneIndex = 1;
+
+			addTelephoneBtn.addEventListener("click", () => {
+				const inputTelefone = document.createElement("input");
+				inputTelefone.type = "text";
+				inputTelefone.name = `telefone${telefoneIndex}`;
+				inputTelefone.placeholder = "Telefone";
+				telefonesContainer.appendChild(inputTelefone);
+				telefoneIndex++;
+			});
+
+			function getTelefones() {
+				const telefones = [];
+
+				for (let i = 0; i < telefoneIndex; i++) {
+					const telefoneInput = document.querySelector(`input[name="telefone${i}"]`);
+					if (telefoneInput) {
+						const telefoneValue = telefoneInput.value;
+						if (telefoneValue.trim() !== "") {
+							telefones.push({number: telefoneValue});
+						}
+					}
+				}
+
+				return telefones;
+			}
+			const editBtn = document.getElementById("editBtn");
+			const modalEditSupplier = document.getElementById("modalEditSupplier");
+			const closeEditModalBtn = document.getElementById("closeEditModalBtn");
+			const editFormModal = document.getElementById("editFormModal");
+
+			editBtn.addEventListener("click", () => {
+				const checkboxes = document.querySelectorAll(".checkbox-selecionar");
+				const selectedIds = [];
+
+				checkboxes.forEach(checkbox => {
+					if (checkbox.checked) {
+						selectedIds.push(checkbox.dataset.id);
+					}
+				});
+
+				if (selectedIds.length === 1) {
+					const selectedId = parseInt(selectedIds[0]);
+					fetch(`http://localhost:8080/supplier/find-by-id/${selectedId}`)
+						.then(response => response.json())
+						.then(fornecedor => {
+							document.getElementById("editId").value = fornecedor.id;
+							document.getElementById("editNome").value = fornecedor.name;
+							document.getElementById("editEmail").value = fornecedor.email;
+							document.getElementById("editTipo").value = fornecedor.type;
+							document.getElementById("editObservacao").value = fornecedor.observation;
+							
+							const telefonesContainer = document.querySelector("#telefonesContainerEdit");
+        					telefonesContainer.innerHTML = "";
+
+        					fornecedor.telephones.forEach((telefone, index) => {
+            					const telefoneInput = document.createElement("input");
+            					telefoneInput.type = "text";
+            					telefoneInput.name = `telefone${index}`;
+            					telefoneInput.value = telefone.number;
+            					
+            					const removerTelefoneBtn = document.createElement("button");
+						        removerTelefoneBtn.type = "button";
+						        removerTelefoneBtn.textContent = "Remover Telefone";
+						        removerTelefoneBtn.classList.add("removerTelefoneBtn");
+						        removerTelefoneBtn.addEventListener("click", () => {
+						            telefonesContainer.removeChild(telefoneInput);
+						            telefonesContainer.removeChild(removerTelefoneBtn);
+						        });
+						    
+						        telefonesContainer.appendChild(removerTelefoneBtn);
+            					telefonesContainer.appendChild(telefoneInput);
+        					});
+
+							modalEditSupplier.style.display = "block";
+						})
+						.catch(error => {
+							console.error("Erro ao buscar fornecedor:", error);
+						});
+				}
+			});
+
+			closeEditModalBtn.addEventListener("click", () => {
+				modalEditSupplier.style.display = "none";
+			});
+
+			editFormModal.addEventListener("submit", (event) => {
+				event.preventDefault();
+
+				const editSupplier = {
+					name: document.getElementById("editNome").value,
+					email: document.getElementById("editEmail").value,
+					type: document.getElementById("editTipo").value,
+					observation: document.getElementById("editObservacao").value,
+					telephones: getTelefones()
+				};
+
+				const id = document.getElementById("editId").value;
+
+				editarFornecedor(id, editSupplier);
+				modalEditSupplier.style.display = "none";
+			});
+
+			
+			    const addTelephoneBtnEdit = document.querySelector(".addTelephoneBtnEdit");
+			    addTelephoneBtnEdit.addEventListener("click", addTelephoneEdit);
+			    
+			    function addTelephoneEdit() {
+			        const telefonesContainerEdit = document.getElementById("telefonesContainerEdit");
+			        const telefoneContainer = document.createElement("div");
+			        telefoneContainer.classList.add("telefone-container");
+			    
+			        const inputTelefone = document.createElement("input");
+			        inputTelefone.type = "text";
+			        inputTelefone.name = `telefone${telefoneIndex}`;
+			        inputTelefone.placeholder = "Telefone";
+			    
+			        const removerTelefoneBtn = document.createElement("button");
+			        removerTelefoneBtn.type = "button";
+			        removerTelefoneBtn.textContent = "Remover Telefone";
+			        removerTelefoneBtn.classList.add("removerTelefoneBtn");
+			        removerTelefoneBtn.addEventListener("click", () => {
+			            telefonesContainerEdit.removeChild(telefoneContainer);
+			        });
+			    
+			        telefoneContainer.appendChild(inputTelefone);
+			        telefoneContainer.appendChild(removerTelefoneBtn);
+			        telefonesContainerEdit.insertBefore(telefoneContainer, telefonesContainerEdit.lastChild);
+			        telefoneIndex++;
+			    }
+		});
+	</script>
+</body>
+</html>
